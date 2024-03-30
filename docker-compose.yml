@@ -1,0 +1,58 @@
+version: '3.6'
+
+services:
+  #! ================================================================================================================
+  php_service:
+    container_name: travel-php
+    build:
+      context: ./
+      dockerfile: .docker/php/Dockerfile
+    volumes:
+      - ./.env:/home/travel/.env
+      - ./app/.env:/home/travel/.env
+      - ./app:/home/travel
+      - ./app/composer.json:/home/travel/composer.json
+    depends_on:
+      - database_service
+    networks:
+      - travel-network
+
+  #! ================================================================================================================
+  nginx_service:
+    image: nginx:1.23.3
+    container_name: travel-nginx
+    volumes:
+      - .docker/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - .docker/nginx/conf.d:/etc/nginx/conf.d
+      - ./app:/home/travel
+    ports:
+      - ${PORT_NGINX_EXPOSE}:${PORT_NGINX_CONTAINER}
+    depends_on:
+      - php_service
+      - database_service
+    networks:
+      - travel-network
+
+  #! ================================================================================================================
+  database_service:
+    image: mariadb:10.11
+    container_name: travel-database
+    restart: always
+    environment:
+      - MARIADB_ROOT_PASSWORD=${DB_PASSWORD}
+      - MARIADB_DATABASE=${DB_NAME}
+      - MARIADB_USER=${DB_USERNAME}
+      - MARIADB_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - .docker/data:/var/lib/mysql
+      - .docker/database/setup.sql:/docker-entrypoint-initdb.d/setup.sql #! mysqldump -u root -p growfast > /home/database/setup.sql
+      - .docker/database:/home/database
+    ports:
+      - "${PORT_DB_EXPOSE}:${PORT_DB_CONTAINER}"
+    networks:
+      - travel-network
+
+#! ================================================================================================================
+networks:
+  travel-network:
+    driver: bridge
