@@ -12,11 +12,11 @@ class Booking extends REST_Controller
         parent::__construct();
         $this->load->model([
             "User_model"            => "user",
-            "Kota_model"            => "kota",
-            "Jadwal_model"          => "jadwal",
-            "Booking_model"         => "booking",
-            "BookingDetail_model"   => "bookingDetail",
-            "KursiView_model"       => "vKursi"
+            // "Kota_model"            => "kota",
+            // "Jadwal_model"          => "jadwal",
+            "Booking_model"         => "booking"
+            // "BookingDetail_model"   => "bookingDetail",
+            // "KursiView_model"       => "vKursi"
         ]);
     }
 
@@ -285,13 +285,13 @@ class Booking extends REST_Controller
 
     public function list_get()
     {
-        $id_user        = $this->input->get("id_user");
+        $uid        = $this->input->get("uid");
         $page           = $this->input->get("page")     ?: "1";
         $perPage        = $this->input->get("perpage")  ?: "10";
 
-        $this->validateEmpty($id_user, "ID User");
+        $this->validateEmpty($uid, "ID User");
 
-        $_user          = $this->user->where(["id" => $id_user])->get();
+        $_user          = $this->user->where(["uid" => $uid])->get();
         if (!$_user) {
             return $this->response(array(
                 "status"                => true,
@@ -302,35 +302,35 @@ class Booking extends REST_Controller
         }
 
         $totalData  = $this->booking
-            ->where(["id_user" => $_user["id"]])
+            ->where(["uid" => $_user["uid"]])
             ->count_rows();
 
         $detailBooking      = $this->booking
-            ->with_user("fields:nama,nohp")
-            ->with_detail()
-            ->with_jadwal([
-                "with"      => [
-                    [
-                        "relation"  => "armada",
-                        "fields"    => "nopol,merk,kapasitas,bbm,warna",
-                        "with"      => [
-                            "relation"  => "driver",
-                            "fields"    => "nama,jenis_kelamin"
-                        ]
-                    ],
-                    [
-                        "relation"  => "kota_origin",
-                        "fields"    => "nama"
-                    ],
-                    [
-                        "relation"  => "kota_destination",
-                        "fields"    => "nama"
-                    ],
+            ->with_user("fields:nama_emp,username")
+            // ->with_detail()
+            // ->with_jadwal([
+            //     "with"      => [
+            //         [
+            //             "relation"  => "armada",
+            //             "fields"    => "nopol,merk,kapasitas,bbm,warna",
+            //             "with"      => [
+            //                 "relation"  => "driver",
+            //                 "fields"    => "nama,jenis_kelamin"
+            //             ]
+            //         ],
+            //         [
+            //             "relation"  => "kota_origin",
+            //             "fields"    => "nama"
+            //         ],
+            //         [
+            //             "relation"  => "kota_destination",
+            //             "fields"    => "nama"
+            //         ],
 
-                ],
-            ])
-            ->where(["id_user" => $_user["id"]])
-            ->order_by("id", "DESC")
+            //     ],
+            // ])
+            ->where(["uid" => $_user["uid"]])
+            ->order_by("uid", "DESC")
             ->limit($perPage, (($page - 1) * $perPage))
             ->get_all() ?: [];
 
