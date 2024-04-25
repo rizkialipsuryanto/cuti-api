@@ -450,4 +450,171 @@ class Booking extends REST_Controller
             "data"          => $detailBooking
         ], REST_Controller::HTTP_OK);
     }
+
+    public function insertPengajuan_post()
+    {
+        $kodeBooking        = $this->generateKodeBooking();
+        $id_user            = $this->input->post("id_user");
+        $id_jadwal          = $this->input->post("id_jadwal");
+        $tanggal            = $this->input->post("tanggal");
+        $lat_jemput         = $this->input->post("lat_jemput");
+        $lng_jemput         = $this->input->post("lng_jemput");
+        $status_jemput      = MENUNGGU;
+        $status_pembayaran  = MENUNGGU;
+        $batas_pembayaran   = date("Y-m-d H:i:s", strtotime('+5 hours'));
+
+        //! DETAIL
+        $no_identitas       = $this->input->post("no_identitas");
+        $jenis_identitas    = $this->input->post("jenis_identitas");
+        $no_kursi           = $this->input->post("no_kursi");
+        $nama_penumpang     = $this->input->post("nama_penumpang");
+
+        if (!validateDate($tanggal)) {
+            return $this->response([
+                "status"        => true,
+                "code"          => REST_Controller::HTTP_BAD_REQUEST,
+                "message"       => "Format tanggal booking tidak dikenali",
+                "data"          => NULL
+            ], REST_Controller::HTTP_OK);
+        }
+
+        $config = [
+            [
+                'field' => 'id_user',
+                'label' => 'User',
+                'rules' => 'required|trim'
+            ],
+            [
+                'field' => 'id_jadwal',
+                'label' => 'Jadwal',
+                'rules' => 'required|trim'
+            ],
+            [
+                'field' => 'tanggal',
+                'label' => 'Tanggal',
+                'rules' => 'required|trim',
+                'errors' => [
+                    'required' => 'Kolom {field} harus diisi'
+                ]
+            ],
+            [
+                'field' => 'lat_jemput',
+                'label' => 'Latitude Penjemputan',
+                'rules' => 'required|trim',
+                'errors' => [
+                    'required' => 'Kolom {field} harus diisi'
+                ]
+            ],
+            [
+                'field' => 'lng_jemput',
+                'label' => 'Longitude Penjemputan',
+                'rules' => 'required|trim',
+                'errors' => [
+                    'required' => 'Kolom {field} harus diisi'
+                ]
+            ],
+            [
+                'field' => 'no_identitas',
+                'label' => 'Nomor Identitas',
+                'rules' => 'required|trim',
+                'errors' => [
+                    'required' => 'Kolom {field} harus diisi'
+                ]
+            ],
+            [
+                'field' => 'jenis_identitas',
+                'label' => 'Jenis Identitas',
+                'rules' => 'required|trim',
+                'errors' => [
+                    'required' => 'Kolom {field} harus diisi'
+                ]
+            ],
+            [
+                'field' => 'no_kursi',
+                'label' => 'No Kursi',
+                'rules' => 'required|trim',
+                'errors' => [
+                    'required' => 'Kolom {field} harus diisi'
+                ]
+            ],
+            [
+                'field' => 'nama_penumpang',
+                'label' => 'Nama Penumpang',
+                'rules' => 'required|trim',
+                'errors' => [
+                    'required' => 'Kolom {field} harus diisi'
+                ]
+            ],
+        ];
+
+        $this->form_validation->set_rules($config);
+
+        $cekKursi           = $this->vKursi
+            ->where([
+                "id_jadwal"     => $_jadwal["id"],
+                "tanggal"       => $tanggal,
+                "no_kursi"      => $no_kursi
+            ])
+            ->get();
+
+        if ($cekKursi) {
+            return $this->response([
+                "status"        => true,
+                "code"          => REST_Controller::HTTP_BAD_REQUEST,
+                "message"       => "Kursi nomor $no_kursi sudah dibooking. Silahkan pilih no kursi yang lain",
+                "data"          => NULL
+            ], REST_Controller::HTTP_OK);
+        }
+
+        //TODO : INSERT
+        $dataInsert     = [
+            "kode_booking"      => $kodeBooking,
+            "id_user"           => $_user["id"],
+            "id_jadwal"         => $_jadwal["id"],
+            "tanggal"           => $tanggal,
+            "lat_jemput"        => $lat_jemput,
+            "lng_jemput"        => $lng_jemput,
+            "status_jemput"     => $status_jemput,
+            "status_pembayaran" => $status_pembayaran,
+            "batas_pembayaran"  => $batas_pembayaran
+        ];
+
+        $insertBooking          = $this->booking->insert($dataInsert);
+        if (!$dataInsert) {
+            return $this->response([
+                "status"        => true,
+                "code"          => REST_Controller::HTTP_BAD_REQUEST,
+                "message"       => "Terjadi kesalahan saat melakukan proses booking. Kode (R001)",
+                "data"          => NULL
+            ], REST_Controller::HTTP_OK);
+        }
+
+        //! TODO : INSERT DETAIL
+        $dataDetail             = [
+            "id_booking"        => $insertBooking,
+            "no_identitas"      => $no_identitas,
+            "jenis_identitas"   => $jenis_identitas,
+            "no_kursi"          => $no_kursi,
+            "harga"             => $_jadwal["harga"],
+            "nama_penumpang"    => $nama_penumpang,
+        ];
+
+        $insertDetail           = $this->bookingDetail->insert($dataDetail);
+        if (!$insertDetail) {
+            return $this->response([
+                "status"        => true,
+                "code"          => REST_Controller::HTTP_BAD_REQUEST,
+                "message"       => "Terjadi kesalahan saat melakukan proses booking. Kode (R002)",
+                "data"          => NULL
+            ], REST_Controller::HTTP_OK);
+        }
+
+        
+        return $this->response([
+            "status"        => true,
+            "code"          => REST_Controller::HTTP_OK,
+            "message"       => "Booking telah berhasil",
+            "data"          => $detailBooking
+        ], REST_Controller::HTTP_OK);
+    }
 }

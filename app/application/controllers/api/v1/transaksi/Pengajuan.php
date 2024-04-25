@@ -13,7 +13,8 @@ class Pengajuan extends REST_Controller
         $this->load->model([
             "User_model"            => "user",
             "Booking_model"         => "booking",
-            "RiwayatView_model"         => "riwayat"
+            "RiwayatView_model"         => "riwayat",
+            "MasterCuti_model"       => "mastercuti"
         ]);
     }
 
@@ -144,6 +145,107 @@ class Pengajuan extends REST_Controller
                     "total_data"    => $totalData,
                 ]
             ]
+        ], REST_Controller::HTTP_OK);
+    }
+
+    public function insertPengajuan_post()
+    {
+        // $no_cuti        = $this->generateKodeBooking();
+        $no_cuti        = $this->input->post("no_cuti");
+        $uid            = $this->input->post("uid");
+        $tglambilcuti          = $this->input->post("tglambilcuti");
+        $tgl_pengajuan            = date("Y-m-d H:i:s");
+        // $durasi         = $this->input->post("durasi");
+        $keterangan         = $this->input->post("keterangan");
+        $alamatcuti            = $this->input->post("alamatcuti");
+        $atasan_langsung          = $this->input->post("atasan_langsung");
+        $kepala_instalasi            = $this->input->post("kepala_instalasi");
+        $kordinator_karu         = $this->input->post("kordinator_karu");
+        $jeniscuti         = $this->input->post("jeniscuti");
+        $created_at   = date("Y-m-d H:i:s");
+
+        //menghitung durasi
+        $array_data = explode(',', $tglambilcuti); // Pisahkan data berdasarkan koma
+        $durasi = count($array_data); // Hitung jumlah data dalam array
+
+        //! DETAIL
+        // $no_identitas       = $this->input->post("no_identitas");
+        // $jenis_identitas    = $this->input->post("jenis_identitas");
+        // $no_kursi           = $this->input->post("no_kursi");
+        // $nama_penumpang     = $this->input->post("nama_penumpang");
+
+        $cekCuti           = $this->mastercuti
+            ->where([
+                "uid"     => $uid,
+                "tahun"       => date("Y")
+                // "sisa_cuti"      => $sisa_cuti
+            ])
+            ->get();
+        
+        // var_dump($cekCuti);
+        // die();
+        if ($cekCuti['sisa_cuti'] == '0' || $cekCuti['sisa_cuti'] < $durasi) {
+            return $this->response([
+                "status"        => true,
+                "code"          => REST_Controller::HTTP_BAD_REQUEST,
+                "message"       => "Cuti Sudah Habis, Anda tidak bisa mengajukan !!!",
+                "data"          => NULL
+            ], REST_Controller::HTTP_OK);
+        }
+
+        //TODO : INSERT
+        $dataInsert     = [
+            // "no_cuti"      => $no_cuti,
+            "uid"           => $uid,
+            "tglambilcuti"         => $tglambilcuti,
+            "tgl_pengajuan"           => $tgl_pengajuan,
+            "durasi"        => $durasi,
+            "keterangan"        => $keterangan,
+            "alamatcuti"     => $alamatcuti,
+            "atasan_langsung" => $atasan_langsung,
+            "kepala_instalasi"  => $kepala_instalasi,
+            "kordinator_karu"      => $kordinator_karu,
+            "stt_cuti"           => 1,
+            "jeniscuti"         => $jeniscuti,
+            "created_at"           => $created_at
+        ];
+
+        $insertPengajuan          = $this->booking->insert($dataInsert);
+        if (!$dataInsert) {
+            return $this->response([
+                "status"        => true,
+                "code"          => REST_Controller::HTTP_BAD_REQUEST,
+                "message"       => "Terjadi kesalahan saat melakukan proses Cuti. Kode (R001)",
+                "data"          => NULL
+            ], REST_Controller::HTTP_OK);
+        }
+
+        //! TODO : INSERT DETAIL
+        // $dataDetail             = [
+        //     "id_booking"        => $insertBooking,
+        //     "no_identitas"      => $no_identitas,
+        //     "jenis_identitas"   => $jenis_identitas,
+        //     "no_kursi"          => $no_kursi,
+        //     "harga"             => $_jadwal["harga"],
+        //     "nama_penumpang"    => $nama_penumpang,
+        // ];
+
+        // $insertDetail           = $this->bookingDetail->insert($dataDetail);
+        // if (!$insertDetail) {
+        //     return $this->response([
+        //         "status"        => true,
+        //         "code"          => REST_Controller::HTTP_BAD_REQUEST,
+        //         "message"       => "Terjadi kesalahan saat melakukan proses booking. Kode (R002)",
+        //         "data"          => NULL
+        //     ], REST_Controller::HTTP_OK);
+        // }
+
+        
+        return $this->response([
+            "status"        => true,
+            "code"          => REST_Controller::HTTP_OK,
+            "message"       => "Pengajuan telah berhasil",
+            "data"          => $dataInsert
         ], REST_Controller::HTTP_OK);
     }
 }
