@@ -13,6 +13,7 @@ class Master extends REST_Controller
         $this->load->model([
             "User_model"            => "user",
             "JenisCuti_model"         => "jeniscuti",
+            "StatusCuti_model"         => "statuscuti",
             "Koordinator_model"         => "koordinator",
             "KepalaInstalasi_model"         => "kepalainstalasi",
             "AtasanLangsung_model"         => "atasanlangsung"
@@ -100,6 +101,27 @@ class Master extends REST_Controller
             "code"          => REST_Controller::HTTP_OK,
             "message"       => "Data atasanlangsung ditemukan",
             "data"          => $atasanlangsung
+        ], REST_Controller::HTTP_OK);
+    }
+
+    public function statuscuti_get()
+    {
+        $statuscuti = $this->statuscuti->get_all() ?: [];
+
+        if (!$statuscuti) {
+            return $this->response([
+                "status"        => true,
+                "code"          => REST_Controller::HTTP_NOT_FOUND,
+                "message"       => "Data Status tidak ditemukan",
+                "data"          => NULL
+            ], REST_Controller::HTTP_OK);
+        }
+
+        return $this->response([
+            "status"        => true,
+            "code"          => REST_Controller::HTTP_OK,
+            "message"       => "Data Jenis Cuti ditemukan",
+            "data"          => $statuscuti
         ], REST_Controller::HTTP_OK);
     }
 }
