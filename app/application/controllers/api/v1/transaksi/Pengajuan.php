@@ -85,6 +85,7 @@ class Pengajuan extends REST_Controller
     public function list_get()
     {
         $uid        = $this->input->get("uid");
+        $status        = $this->input->get("status");
         $page           = $this->input->get("page")     ?: "1";
         $perPage        = $this->input->get("perpage")  ?: "10";
 
@@ -100,38 +101,34 @@ class Pengajuan extends REST_Controller
             ), REST_Controller::HTTP_OK);
         }
 
-        $totalData  = $this->booking
-            ->where(["uid" => $_user["uid"]])
-            ->count_rows();
+        
 
-        $detailBooking      = $this->booking
+        if(!$status)
+            {
+
+            $totalData  = $this->booking
+                ->where(["uid" => $_user["uid"]])
+                ->count_rows();
+
+            $detailBooking      = $this->booking
             ->with_user("fields:nama_emp,username")
-            // ->with_detail()
-            // ->with_jadwal([
-            //     "with"      => [
-            //         [
-            //             "relation"  => "armada",
-            //             "fields"    => "nopol,merk,kapasitas,bbm,warna",
-            //             "with"      => [
-            //                 "relation"  => "driver",
-            //                 "fields"    => "nama,jenis_kelamin"
-            //             ]
-            //         ],
-            //         [
-            //             "relation"  => "kota_origin",
-            //             "fields"    => "nama"
-            //         ],
-            //         [
-            //             "relation"  => "kota_destination",
-            //             "fields"    => "nama"
-            //         ],
-
-            //     ],
-            // ])
-            ->where(["uid" => $_user["uid"]])
+                ->where(["uid" => $_user["uid"]])
             ->order_by("no_cuti", "DESC")
             ->limit($perPage, (($page - 1) * $perPage))
             ->get_all() ?: [];
+            }
+        else{
+            $totalData  = $this->booking
+                ->where(["uid" => $_user["uid"], "stt_cuti" => $status])
+                ->count_rows();
+
+            $detailBooking      = $this->booking
+            ->with_user("fields:nama_emp,username")
+                ->where(["uid" => $_user["uid"], "stt_cuti" => $status])
+            ->order_by("no_cuti", "DESC")
+            ->limit($perPage, (($page - 1) * $perPage))
+            ->get_all() ?: [];
+        }
 
         return $this->response([
             "status"        => true,

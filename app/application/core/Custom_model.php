@@ -1781,7 +1781,7 @@ class Custom_model extends MY_Model
         if ($full_model) {
 
             $data['foreign_model'] = end($full_model);
-            $data['model_dir'] = str_replace($data['foreign_model'], null, implode('/', $full_model));
+            // $data['model_dir'] = str_replace($data['foreign_model'], null, implode('/', $full_model));
         }
 
         $foreign_model_name = str_replace('/', '_', $data['model_dir'] . $data['foreign_model']);
